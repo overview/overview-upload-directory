@@ -23,7 +23,7 @@ def upload_single_file(server_url, api_token, filename):
 	r.raise_for_status()
 
 
-def finish_upload(server_url, api_token, docset_id):
+def finish_upload(server_url, api_token):
 	url = server_url + '/api/v1/files/finish'
 	headers = {'Content-Type':'application/json'}
 	data = { 'lang' : 'en' }
@@ -39,7 +39,7 @@ if len(sys.argv) < 2:
 file = sys.argv[1]
 
 upload_single_file(SERVER_URL, API_TOKEN, file)
-finish_upload(SERVER_URL, API_TOKEN, DOCSET_ID)
+finish_upload(SERVER_URL, API_TOKEN)
 
 
 
