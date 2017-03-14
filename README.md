@@ -12,7 +12,7 @@ A script to upload / sync a directory of document files to an Overview server
 
 * `SERVER_NAME` is the base URL for the server, which defaults to http://localhost:9000 for use with [overview-local](https://github.com/overview/overview-local)
 
-* `-n` means don't skip previously uploaded files, if specified. Files are compared by their hash, meaning that even if you move or rename a file it will not be uploaded again.
+* `-n` means don't skip previously uploaded files. This might cause duplicates and waste a lot of time. Files are compared by their hash, meaning that even if you move or rename a file it will not be uploaded again.
 
 * `file` is the name of a file, or a directory. 
 
