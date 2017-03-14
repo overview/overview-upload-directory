@@ -2,9 +2,9 @@
 A script to upload / sync a directory of document files to an Overview server
 
 # usage
-`python upload.py -t <API_TOKEN> -s <SERVER_URL> [-n] file`
+`python upload.py  [-s <SERVER_URL>] [-n] -t <API_TOKEN> file`
 
-* `API_TOKEN` is the access token for a particular document set, which you get like this
+* `API_TOKEN` is required. It's the access token for a particular document set, which you get like this
 
    1. Browse to your document set. The URL will look like `https://www.overviewdocs.com/documentsets/123456`.
    2. Note the document set number, in this case 123456
