@@ -1,5 +1,5 @@
 # overview-upload-directory
-A script to upload / sync a directory of document files to an Overview server
+A script to upload a directory of document files to an Overview server, skipping files previously uploaded.
 
 # usage
 `python upload.py  [-s <SERVER_URL>] [-n] -t <API_TOKEN> file`
@@ -17,6 +17,8 @@ A script to upload / sync a directory of document files to an Overview server
 * `file` is the name of a file, or a directory. 
 
 Note that the document titles in Overview will have any preceding path stripped off. So `upload some/path/to/directory` will produce titles of the form `directory/file1`, `directory/subdir/file2`, etc. If you want to preserve `some/path/to`, do `upload some`
+
+Files that were previously uploaded to the server, then deleted locally, will not be deleted from the server. 
 
 Requires python3
 
