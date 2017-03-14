@@ -10,7 +10,7 @@ A script to upload / sync a directory of document files to an Overview server
    2. Note the document set number, in this case 123456
    3. Browse to `https://www.overviewdocs.com/documentsets/[your number here]/api-tokens` and click "Generate token".
 
-* `SERVER_NAME` is the base URL for the server, which defaults to http://localhost:9000 for use with [overview-local](https://github.com/overview/overview-local)
+* `SERVER_URL` is the base URL for the server, which defaults to http://localhost:9000 for use with [overview-local](https://github.com/overview/overview-local)
 
 * `-n` means don't skip previously uploaded files. This might cause duplicates and waste a lot of time. Files are compared by their hash, meaning that even if you move or rename a file it will not be uploaded again.
 
