@@ -3,14 +3,14 @@ import sys
 import os
 import uuid
 import json
+import argparse
 
-API_TOKEN='8kr2sb7qgd4lh30crvg0rgttv'
-SERVER_URL='http://localhost:9000'
-
+# may need to escape file names in some way, not sure...
 def content_disposition(filename):
 	return 'attachment; filename="' + filename + '"'
 
 
+# per http://docs.overviewproject.apiary.io/#reference/files/file/upload-file?console=1
 def upload_single_file(server_url, api_token, filename):
 	url = server_url + '/api/v1/files/' + str(uuid.uuid4())
 
@@ -23,6 +23,7 @@ def upload_single_file(server_url, api_token, filename):
 	r.raise_for_status()
 
 
+# per http://docs.overviewproject.apiary.io/#reference/files/finish-uploading-files/add-files-to-document-set?console=1
 def finish_upload(server_url, api_token):
 	url = server_url + '/api/v1/files/finish'
 	headers = {'Content-Type':'application/json'}
@@ -31,15 +32,17 @@ def finish_upload(server_url, api_token):
 	r = requests.post(url, auth=(api_token,'x-auth-token'), headers=headers, data=json.dumps(data))
 	r.raise_for_status()
 
+
 # ---- Main ----
-if len(sys.argv) < 2:
-	print("Usage: overview-upload [file or directory]")
-	sys.exit(0)
 
-file = sys.argv[1]
+parser = argparse.ArgumentParser(description='Upload a file or directory to an Overview server.')
+parser.add_argument('file', help='file or directory to upload')
+parser.add_argument('-t', '--token', help='API token corresponding to document set', required=True)
+parser.add_argument('-s', '--server', help='url of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
+args = parser.parse_args()
 
-upload_single_file(SERVER_URL, API_TOKEN, file)
-finish_upload(SERVER_URL, API_TOKEN)
+upload_single_file(args.server, args.token, args.file)
+finish_upload(args.server, args.token,)
 
 
 
