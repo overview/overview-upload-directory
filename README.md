@@ -6,9 +6,9 @@ A script to upload / sync a directory of document files to an Overview server
 
 * `API_TOKEN` is the access token for a particular document set, which you get like this
 
-1. Browse to your document set. The URL will look like `https://www.overviewdocs.com/documentsets/123456`
-2. We'll refer to the `123456` part of the URl above as `$DOCUMENT_SET_ID`.
-3. Browse to `https://www.overviewdocs.com/documentsets/$DOCUMENT_SET_ID/api-tokens` and click "Generate token".
+** Browse to your document set. The URL will look like `https://www.overviewdocs.com/documentsets/123456`
+** We'll refer to the `123456` part of the URl above as `$DOCUMENT_SET_ID`.
+** Browse to `https://www.overviewdocs.com/documentsets/$DOCUMENT_SET_ID/api-tokens` and click "Generate token".
 
 * `SERVER_NAME` is the base URL for the server, which defaults to http://localhost:9000 for use with overview-local
 
