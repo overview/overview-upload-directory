@@ -16,7 +16,7 @@ A script to upload a directory of document files to an Overview server, skipping
 
 * `file` is the name of a file, or a directory. 
 
-Note that the document titles in Overview will have any preceding path stripped off. So `upload some/path/to/directory` will produce titles of the form `directory/file1`, `directory/subdir/file2`, etc. If you want to preserve `some/path/to`, do `upload some`
+The document title will be set to the file name, with any path stripped off. If you upload a directory, all except the directory name itself will be stripped. So `upload some/path/to/directory` will produce titles of the form `directory/file1`, `directory/subdir/file2`, etc. This is so the current working directory when uploading files doesn't affect the folder structure on Overview. If you want to preserve `some/path/to`, do `upload some`.
 
 Files that were previously uploaded to the server, then deleted locally, will not be deleted from the server. 
 
