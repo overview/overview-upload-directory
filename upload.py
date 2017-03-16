@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Upload a file, or directory, to an Overview server. 
 # From https://github.com/overview/overview-upload-directory
-
 import requests
 import sys
 import os
@@ -9,6 +8,7 @@ import uuid
 import json
 import argparse
 import hashlib
+import traceback
 
 files_uploaded = 0
 
@@ -65,9 +65,9 @@ def upload_directory(server_url, api_token, filename, skip_existing=False):
 	    	fullname = os.path.join(subdir, file)
 	    	try:
 	    		upload_single_file(server_url, api_token, fullname, skip_existing=skip_existing)
-	    	except:
-	    		print("Error, skipping " + fullname)
-
+	    	except Exception as e:
+	    		print("Error: " + str(e) + ", skipping " + fullname)
+	    		traceback.print_exc()
 
 # ---- Main ----
 
