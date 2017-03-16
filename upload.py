@@ -66,8 +66,9 @@ def upload_directory(server_url, api_token, filename, skip_existing=False):
 	    	try:
 	    		upload_single_file(server_url, api_token, fullname, skip_existing=skip_existing)
 	    	except Exception as e:
-	    		print("Error: " + str(e) + ", skipping " + fullname)
+	    		print("Error, skipping " + fullname)
 	    		traceback.print_exc()
+	    		print('')
 
 # ---- Main ----
 
