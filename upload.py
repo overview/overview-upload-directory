@@ -9,6 +9,7 @@ import json
 import argparse
 import hashlib
 import traceback
+import rfc6266
 
 files_uploaded = 0
 
@@ -20,10 +21,6 @@ def file_already_on_server(server_url, api_token, bytes):
 
 	return r.status_code == 204  # 204 = already got it, 404 = don't got it
 
-
-# may need to escape file names in some way, not sure...
-def content_disposition(filename):
-	return 'attachment; filename="' + filename + '"'
 
 # per http://docs.overviewproject.apiary.io/#reference/files/file/upload-file?console=1
 def upload_single_file(server_url, api_token, filename, skip_existing=False):
@@ -38,7 +35,7 @@ def upload_single_file(server_url, api_token, filename, skip_existing=False):
 		print("Uploading " + filename + "...")
 
 	url = server_url + '/api/v1/files/' + str(uuid.uuid4())
-	headers = { 'content-disposition' : content_disposition(filename),
+	headers = { 'content-disposition' : rfc6266.build_header(filename),
 				'content-length' : str(os.path.getsize(filename)) }
 	r = requests.post(url, auth=(api_token,'x-auth-token'), headers=headers, data=bytes)
 	r.raise_for_status()
