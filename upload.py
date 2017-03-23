@@ -13,6 +13,12 @@ import rfc6266
 
 files_uploaded = 0
 
+# Can Overview read this file? Basically just blacklists common formats we know we can't handle (yet)
+def file_readable_by_overview(filename):
+	path, ext = os.path.splitext('/path/to/somefile.ext')
+	return ext not in ['.zip', '.msg', '.gif', '.jpg', '.png', '.tiff', '.tif']
+
+
 # check if a file is already on the server, via sha1 hash
 def file_already_on_server(server_url, api_token, bytes):
 	sha1 = hashlib.sha1(bytes).hexdigest()
@@ -25,6 +31,10 @@ def file_already_on_server(server_url, api_token, bytes):
 # per http://docs.overviewproject.apiary.io/#reference/files/file/upload-file?console=1
 def upload_single_file(server_url, api_token, filename, skip_existing=False):
 	global files_uploaded
+
+	if not file_readable_by_overview(filename):
+		print("Skipping " + filename + ", Overview cannot read this format")
+		return
 
 	bytes = open(filename, 'rb').read()
 
