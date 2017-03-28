@@ -13,6 +13,14 @@ import rfc6266
 
 files_uploaded = 0
 
+# removes any previously uploaded files that have not had /finish to get them going
+# necessary so that we don't upload files twice if user hits ctrl-c on this script and restarts
+# (file_already_on_server does not check upload queue)
+def clear_previous_upload(server_url, api_token):
+	url = server_url + '/api/v1/files'
+	r = requests.delete(url, auth=(api_token,'x-auth-token'))
+	r.raise_for_status()
+
 # Can Overview read this file? Basically just blacklists common formats we know we can't handle (yet)
 def file_readable_by_overview(filename):
 	path, ext = os.path.splitext(filename)
@@ -102,6 +110,8 @@ else:
 	dirname = os.path.dirname(filename)
 	if dirname!='':
 		os.chdir(dirname)
+
+	clear_previous_upload(args.server, args.token)
 
 	if ispath:
 		upload_directory(args.server, args.token, basename, skip_existing=skip_existing)
