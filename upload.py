@@ -16,7 +16,7 @@ files_uploaded = 0
 # Can Overview read this file? Basically just blacklists common formats we know we can't handle (yet)
 def file_readable_by_overview(filename):
 	path, ext = os.path.splitext(filename)
-	return ext not in ['.zip', '.msg', '.gif', '.jpg', '.png', '.tiff', '.tif']
+	return ext.lower() not in ['.zip', '.msg', '.gif', '.jpg', '.png', '.tiff', '.tif', '.dbf']
 
 
 # check if a file is already on the server, via sha1 hash
