@@ -65,12 +65,13 @@ def upload_single_file(server_url, api_token, filename, skip_existing=False):
 
 
 # per http://docs.overviewproject.apiary.io/#reference/files/finish-uploading-files/add-files-to-document-set?console=1
-def finish_upload(server_url, api_token, ocr):
+def finish_upload(server_url, api_token, ocr, split_by_page):
 	url = server_url + '/api/v1/files/finish'
 	headers = {'Content-Type':'application/json'}
 	data = {
             'lang' : 'en',
-            'ocr' : ocr
+            'ocr' : ocr,
+            'split_documents': split_by_page
     }
 
 	r = requests.post(url, auth=(api_token,'x-auth-token'), headers=headers, data=json.dumps(data))
@@ -99,6 +100,7 @@ def main():
     parser.add_argument('-t', '--token', help='API token corresponding to document set', required=True)
     parser.add_argument('-s', '--server', help='url of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
     parser.add_argument('-n', '--noskip', help='Don\'t skip files already on server', action="store_true")
+    parser.add_argument('--split-by-page', dest='split_by_page', help='Turn input files into one document per page', action="store_true", default=False)
     parser.add_argument('--ocr', dest='ocr', help='Run OCR on PDF pages that are only images', action="store_true")
     parser.add_argument('--no-ocr', dest='ocr', help='Skip OCR always (for speed)', action="store_false")
     parser.set_defaults(ocr=True)
@@ -130,7 +132,7 @@ def main():
 
         # Send a finish only if we actually uploaded something (may have skipped all)
         if files_uploaded > 0:
-            finish_upload(args.server, args.token, args.ocr)
+            finish_upload(args.server, args.token, args.ocr, args.split_by_page)
 
 if __name__ == '__main__':
     main()
