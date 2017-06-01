@@ -65,10 +65,13 @@ def upload_single_file(server_url, api_token, filename, skip_existing=False):
 
 
 # per http://docs.overviewproject.apiary.io/#reference/files/finish-uploading-files/add-files-to-document-set?console=1
-def finish_upload(server_url, api_token):
+def finish_upload(server_url, api_token, ocr):
 	url = server_url + '/api/v1/files/finish'
 	headers = {'Content-Type':'application/json'}
-	data = { 'lang' : 'en' }
+	data = {
+            'lang' : 'en',
+            'ocr' : ocr
+    }
 
 	r = requests.post(url, auth=(api_token,'x-auth-token'), headers=headers, data=json.dumps(data))
 	r.raise_for_status()
@@ -90,40 +93,44 @@ def upload_directory(server_url, api_token, filename, skip_existing=False):
 
 # ---- Main ----
 
-parser = argparse.ArgumentParser(description='Upload a file or directory to an Overview server.')
-parser.add_argument('file', help='file or directory to upload')
-parser.add_argument('-t', '--token', help='API token corresponding to document set', required=True)
-parser.add_argument('-s', '--server', help='url of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
-parser.add_argument('-n', '--noskip', help='Don\'t skip files already on server', action="store_true")
-args = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser(description='Upload a file or directory to an Overview server.')
+    parser.add_argument('file', help='file or directory to upload')
+    parser.add_argument('-t', '--token', help='API token corresponding to document set', required=True)
+    parser.add_argument('-s', '--server', help='url of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
+    parser.add_argument('-n', '--noskip', help='Don\'t skip files already on server', action="store_true")
+    parser.add_argument('--ocr', dest='ocr', help='Run OCR on PDF pages that are only images', action="store_true")
+    parser.add_argument('--no-ocr', dest='ocr', help='Skip OCR always (for speed)', action="store_false")
+    parser.set_defaults(ocr=True)
+    args = parser.parse_args()
 
-skip_existing = not args.noskip
+    skip_existing = not args.noskip
 
-filename = args.file.rstrip('/')  # removing trailing slash important for consistent directory handling
+    filename = args.file.rstrip('/')  # removing trailing slash important for consistent directory handling
 
-if not os.path.exists(filename):
-	print("Cannot find file or directory " + filename)
-else:
-	ispath = os.path.isdir(filename)
+    if not os.path.exists(filename):
+        print("Cannot find file or directory " + filename)
+    else:
+        ispath = os.path.isdir(filename)
 
-	# do this all from directory containing specified file, to get consistent file titles 
-	# if user specified a file, the filename (no path) is a title
-	# if user specified a directory, that directory name (no path) is the base of the title
-	basename = os.path.basename(filename)	
-	dirname = os.path.dirname(filename)
-	if dirname!='':
-		os.chdir(dirname)
+        # do this all from directory containing specified file, to get consistent file titles 
+        # if user specified a file, the filename (no path) is a title
+        # if user specified a directory, that directory name (no path) is the base of the title
+        basename = os.path.basename(filename)	
+        dirname = os.path.dirname(filename)
+        if dirname!='':
+            os.chdir(dirname)
 
-	clear_previous_upload(args.server, args.token)
+        clear_previous_upload(args.server, args.token)
 
-	if ispath:
-		upload_directory(args.server, args.token, basename, skip_existing=skip_existing)
-	else:
-		upload_single_file(args.server, args.token, basename, skip_existing=skip_existing)
+        if ispath:
+            upload_directory(args.server, args.token, basename, skip_existing=skip_existing)
+        else:
+            upload_single_file(args.server, args.token, basename, skip_existing=skip_existing)
 
-	# Send a finish only if we actually uploaded something (may have skipped all)
-	if files_uploaded > 0:
-		finish_upload(args.server, args.token,)
+        # Send a finish only if we actually uploaded something (may have skipped all)
+        if files_uploaded > 0:
+            finish_upload(args.server, args.token, args.ocr)
 
-
-
+if __name__ == '__main__':
+    main()
