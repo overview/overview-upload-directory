@@ -8,9 +8,9 @@ def read_file(filename):
 
 setup(
     name='overview_upload',
-    version='0.9.2',
+    version='0.9.3',
     description='Upload documents to Overview web server',
-    long_description=read_file('README.md'),
+    long_description=read_file('README.rst'),
     url='https://github.com/overview/overview-upload-directory',
     install_requires=read_file('requirements.txt').splitlines(),
     packages=[ 'overview_upload' ],
