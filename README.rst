@@ -15,6 +15,9 @@ will install a ``overview-upload`` program in your path.
 Command-Line Usage
 ==================
 
+overview-upload: upload files
+-----------------------------
+
 ``overview-upload --server <SERVER_URL> --token <API_TOKEN> [options] DIRECTORY``
 
 Required arguments:
@@ -57,6 +60,24 @@ filename, without any directory information. If you upload a directory,
 filenames will include subdirectory informatin: for instance, if
 ``overview-upload /some/path`` uploads ``/some/path/to/file.pdf``, the
 Overview document title will be ``to/file.pdf``.
+
+overview-upload-csv: upload from a CSV manifest
+-----------------------------------------------
+
+Given a CSV like this:
+
+.. csv-table:: manifest.csv
+   :header id,title,url,field1,field2
+
+   1,doc1.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,some metadata,some more metadata
+   2,doc2.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,more metadata,and even more metadata
+
+You can upload the referenced files to Overview like this:
+
+``overview-upload-csv <API_TOKEN> <manifest.csv> --url-field url --title-field title --server https://www.overviewdocs.com``
+
+If you browse to the document set and add ``field1`` and ``field2`` fields, you
+will see the values from the CSV.
 
 API usage
 =========

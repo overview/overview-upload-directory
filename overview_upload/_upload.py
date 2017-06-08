@@ -1,4 +1,6 @@
 import hashlib
+import io
+import json
 import logging
 import os
 import pathlib
@@ -8,9 +10,9 @@ import uuid
 
 def _calculate_sha1(in_file):
     m = hashlib.sha1()
-    for chunk in iter(lambda: f.read(8192), b''):
+    for chunk in iter(lambda: in_file.read(8192), b''):
         m.update(chunk)
-    m.hexdigest()
+    return m.hexdigest()
 
 class Upload:
     """Start an Upload session.
@@ -61,7 +63,7 @@ class Upload:
         r = self._request('DELETE', '/api/v1/files')
         r.raise_for_status()
 
-    def send_directory(self, dirname, skip_unhandled_extension=True, skip_duplicate=True):
+    def send_directory(self, dirname, skip_unhandled_extension=True, skip_duplicate=True, metadata=None):
         """Upload all files in a directory to the Overview server.
 
         If ``skip_duplicate == False``, then files will be streamed to the
@@ -77,6 +79,9 @@ class Upload:
             file whose sha1 hash is identical to this file's. Files that have been
             sent without a call to ``finish()`` will not be included in the check.
             If ``False``, stream files instead of caching them.
+        :param dict metadata: Metadata to set on every document, or ``None``.
+            The document set should have a metadata schema that corresponds to
+            this document's metadata (or you can set the schema later).
         """
         for path in pathlib.Path(dirname).glob('**/*'):
             filename = str(path.relative_to(dirname)) # visible on the server
@@ -90,10 +95,11 @@ class Upload:
                     path,
                     filename,
                     skip_unhandled_extension=skip_unhandled_extension,
-                    skip_duplicate=skip_duplicate
+                    skip_duplicate=skip_duplicate,
+                    metadata=metadata
                 )
 
-    def send_path_if_conditions_met(self, path, filename, skip_unhandled_extension=True, skip_duplicate=True):
+    def send_path_if_conditions_met(self, path, filename, skip_unhandled_extension=True, skip_duplicate=True, metadata=None):
         """Upload the file at the specified Path to the Overview server.
 
         The file will be streamed: that is, the script does not risk running out
@@ -110,6 +116,9 @@ class Upload:
             contains a file whose sha1 hash is identical to this file's. Files
             that have been sent but not finish()ed will not be included in the
             check.
+        :param dict metadata: Metadata to set on the document, or ``None``.
+            The document set should have a metadata schema that corresponds to
+            this document's metadata (or you can set the schema later).
         """
         n_bytes = path.stat().st_size
 
@@ -129,10 +138,11 @@ class Upload:
                 n_bytes=n_bytes,
                 skip_unhandled_extension=skip_unhandled_extension,
                 skip_duplicate=skip_duplicate,
+                metadata=metadata,
                 sha1=sha1
             )
 
-    def send_file_if_conditions_met(self, in_file, filename, n_bytes=None, skip_unhandled_extension=True, skip_duplicate=True, sha1=None):
+    def send_file_if_conditions_met(self, in_file, filename, n_bytes=None, skip_unhandled_extension=True, skip_duplicate=True, metadata=None, sha1=None):
         """Upload a file to the Overview server.
 
         If ``n_bytes is None or (skip_duplicate == True and sha1 is None)``,
@@ -152,6 +162,9 @@ class Upload:
             contains a file whose sha1 hash is identical to this file's. Files
             that have been sent without a call to ``finish()`` will not be
             included in the check.
+        :param dict metadata: Metadata to set on the document, or ``None``.
+            The document set should have a metadata schema that corresponds to
+            this document's metadata (or you can set the schema later).
         :param str sha1: SHA1 hash:to use in ``skip_duplicate()`` check, or
             ``None`` to calculate on the fly. If you set this and ``n_bytes``,
             this method will stream the file contents instead of caching them
@@ -169,26 +182,26 @@ class Upload:
                 # Cache in_file bytes in memory so we can read it twice: once in
                 # is_file_already_in_document_set(), and once below.
                 in_file = io.BytesIO(in_file.read())
+                sha1 = _calculate_sha1(in_file)
+                in_file.seek(0)
 
             if self.is_file_already_in_document_set(in_file, sha1):
                 self.logger.info('Skipping %s, already on server', filename)
                 return
 
-            if sha1 is None:
-                # Rewind from previous caching
-                in_file.seek(0)
-
         if n_bytes is None:
             # Cache in_file bytes in memory so we can read it twice: once 
             # here, once below
             in_file = io.BytesIO(in_file.read())
-            n_bytes = len(in_file.getbuffer().nbytes)
+            n_bytes = in_file.getbuffer().nbytes
 
         server_path = '/api/v1/files/{}'.format(uuid.uuid4())
         headers = {
             'Content-Disposition': rfc6266.build_header(filename),
             'Content-Length': str(n_bytes),
         }
+        if metadata:
+            headers['Overview-Document-Metadata-JSON'] = json.dumps(metadata, ensure_ascii=True)
 
         self.logger.info('Uploading %s…', filename)
         r = self._request('POST', server_path, headers=headers, data=in_file)
@@ -212,8 +225,12 @@ class Upload:
 
         r = self._request('HEAD', '/api/v1/document-sets/files/{}'.format(sha1))
 
-        r.raise_for_status()
-        return r.status_code == 204 # 204 = already got it
+        if r.status_code == 204:
+            return True
+        elif r.status_code == 404:
+            return False
+        else:
+            r.raise_for_status()
 
     def finish(self, lang='en', ocr=True, split_by_page=False):
         """Adds sent files to the document set.
@@ -240,7 +257,7 @@ class Upload:
         })
         r.raise_for_status()
         self.logger.info(
-            'Finished uploading %s files. Browse to %s/documentsets to watch progress',
+            'Finished uploading %d file(s). Browse to %s/documentsets to watch progress',
             self.n_uploaded,
             self.server_url
         )

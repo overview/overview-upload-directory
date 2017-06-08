@@ -14,7 +14,7 @@ setup(
     url='https://github.com/overview/overview-upload-directory',
     install_requires=read_file('requirements.txt').splitlines(),
     packages=[ 'overview_upload' ],
-    scripts=[ 'overview-upload' ],
+    scripts=[ 'overview-upload', 'overview-upload-csv' ],
     classifiers=(
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Intended Audience :: Developers',

@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+
+import argparse
+import csv
+import logging
+import pathlib
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import overview_upload
+
+def open_local_file(filename, logger, field, line_number):
+    if not pathlib.Path(filename).is_file():
+        logger.warn('Skipping CSV line %d: %s is not a file', line_number, filename)
+        return
+
+    with open(filename, 'rb') as f:
+        yield f
+
+def open_url(url, logger, field, line_number):
+    error_prefix = 'Skipping CSV line {}: '.format(line_number)
+
+    url = url.strip()
+
+    if not url:
+        logger.warn('%s: the %s field is empty', error_prefix, field)
+
+    try:
+        parts = urllib.parse.urlparse(url)
+        if not parts.scheme:
+            logger.warn('%s: "%s" does not start with http: or https:', error_prefix, url)
+            return
+        elif not parts.netloc:
+            logger.warn('%s: "%s" does not include a network location', error_prefix, url)
+            return
+    except ValueError as err:
+        logger.warn('%s: %s is not a valid URL', error_prefix, url)
+        return
+
+    try:
+        with urllib.request.urlopen(url) as f:
+            yield f
+    except urllib.error.URLError as err:
+        logger.warn('Error in CSV on line %d: cannot open %s: %s', line_number, url, str(err))
+
+def build_upload_call(upload, logger, field, title_field, open_file):
+    def process_row(row, line_number):
+        path = row[field]
+        if not path:
+            logger.warn('Skipping CSV line %d: missing value for %s', line_number, field)
+            return
+
+        title = row[title_field]
+        if not title:
+            logger.warn('Skipping CSV line %d: missing value for %s', line_number, field)
+            return
+
+        for in_file in open_file(path, logger, field, line_number):
+            upload.send_file_if_conditions_met(in_file, title, metadata=row)
+
+    return process_row
+
+def main():
+    parser = argparse.ArgumentParser(description='Upload to Overview from a spreadsheet full of metadata')
+    parser.add_argument('api_token', help='API token from http://localhost:9000/documentsets/[ID]/api-tokens')
+    parser.add_argument('csv', help='path to CSV listing files to upload')
+    parser.add_argument('--server', help='URL of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--url-field', help='CSV column containing URLs of files to stream to Overview')
+    group.add_argument('--local-file-field', help='CSV column containing filenames to stream to Overview')
+
+    parser.add_argument('--title-field', help='CSV column containing titles to display in Overview (default url/local-file)')
+
+    args = parser.parse_args()
+
+    logger = logging.getLogger('upload-elsevier-docset')
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler())
+
+    upload = overview_upload.Upload(args.server, args.api_token, logger=logger)
+
+    with open(args.csv, encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+
+        field = None
+        open_file = None
+        if args.url_field is not None:
+            if args.url_field not in reader.fieldnames:
+                logger.error('You requested url-field `%s`, but the CSV does not contain it', args.url_field)
+                sys.exit(1)
+            field = args.url_field
+            open_file = open_url
+        else:
+            if args.local_file_field not in reader.fieldnames:
+                logger.error('You requested local-file-field `%s`, but the CSV does not contain it', args.local_file_field)
+                sys.exit(1)
+            field = args.local_file_field
+            open_file = open_local_file
+        if args.title_field and args.title_field not in reader.fieldnames:
+            logger.error('You requested title-field `%s`, but the CSV does not contain it', args.title_field)
+            sys.exit(1)
+
+        process_row = build_upload_call(upload, logger, field, args.title_field or field, open_file)
+
+        for (i, row) in enumerate(reader):
+            process_row(row, i + 1)
+
+    upload.finish()
+
+if __name__ == '__main__':
+    main()
