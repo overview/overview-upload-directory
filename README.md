@@ -1,24 +1,66 @@
-# overview-upload-directory
-A script to upload a directory of document files to an Overview server, skipping files previously uploaded.
+# overview-upload
 
-# usage
-`python upload.py  [-s <SERVER_URL>] [-n] -t <API_TOKEN> file`
+Upload files to an [Overview](https://www.overviewdocs.com) document set.
 
+# Installation
+
+Requires [python3](https://www.python.org/).
+
+`pip3 install overview_upload`, maybe with `sudo` in front. That will install a
+`overview-upload` program in your path.
+
+# Command-Line Usage
+
+`overview-upload --server <SERVER_URL> --token <API_TOKEN> [options] DIRECTORY`
+
+Required arguments:
+
+* `SERVER_URL` is the base URL for the server, which defaults to http://localhost:9000 for use with [overview-local](https://github.com/overview/overview-local).
 * `API_TOKEN` is required. It's the access token for a particular document set, which you get like this
+    1. Browse to your document set. The URL will look like `http://localhost:9000/documentsets/123456`.
+    2. Note the document set number, in this case `123456`
+    3. Browse to `https://www.overviewdocs.com/documentsets/[your number here]/api-tokens` and click "Generate token".
+* `DIRECTORY` is a path to the file or directory you want to upload.
 
-   1. Browse to your document set. The URL will look like `https://www.overviewdocs.com/documentsets/123456`.
-   2. Note the document set number, in this case 123456
-   3. Browse to `https://www.overviewdocs.com/documentsets/[your number here]/api-tokens` and click "Generate token".
+Optional arguments:
 
-* `SERVER_URL` is the base URL for the server, which defaults to http://localhost:9000 for use with [overview-local](https://github.com/overview/overview-local)
+* `--skip-duplicate` (the default), `--noskip`: skip files that are already
+  part of the document set your API token refers to. Files are compared by
+  their sha1 hashes, meaning even if you move or rename the file it will not
+  be uploaded if the document set already includes it. This feature is helpful
+  for synchronizing a local directory with an Overview document set; however,
+  it will not delete Overview documents corresponding to files you deleted
+  locally.
+* `--split-by-page`: tell Overview to turn a multi-page file (like a PDF or
+  Word document) into several Overview documents.
+* `--ocr` (the default), `--no-ocr`: tell Overview what to do when a PDF page
+  has only images but no text. Overview can either try to recognize text using
+  [Tesseract](https://github.com/tesseract-ocr/tesseract) (which is slow and
+  will prevent you from viewing the document set until it finishes), or it can
+  assume the page contains no text.
 
-* `-n` means don't skip previously uploaded files. This might cause duplicates and waste a lot of time. Files are compared by their hash, meaning that even if you move or rename a file it will not be uploaded again.
+If you upload a single file, its Overview document title will be its filename,
+without any directory information. If you upload a directory, filenames will
+include subdirectory informatin: for instance, if `overview-upload /some/path`
+uploads `/some/path/to/file.pdf`, the Overview document title will be
+`to/file.pdf`.
 
-* `file` is the name of a file, or a directory. 
+# API usage
 
-The document title will be set to the file name, with any path stripped off. If you upload a directory, all except the directory name itself will be stripped. So `upload some/path/to/directory` will produce titles of the form `directory/file1`, `directory/subdir/file2`, etc. This is so the current working directory when uploading files doesn't affect the folder structure on Overview. If you want to preserve `some/path/to`, do `upload some`.
+You can also `import overview_upload` from your own Python3 program and then
+use the `overview_upload.Upload` class. See the `overview-server` source code
+for more information.
 
-Files that were previously uploaded to the server, then deleted locally, will not be deleted from the server. 
+# Developing
 
-Requires python3
+## Releasing a new version
 
+0. [Register on PyPI](https://pypi.python.org/pypi?%3Aaction=register_form) and
+   create `~/.pypirc` with `[pypi]\nusername = ...\npassword = ...`
+1. Update `version` in `setup.py`
+2. `rm -r dist && ./setup.py bdist && gpg --detach-sign -a dist/*.tar.gz && twine upload dist/*.tar.gz dist/*.asc`
+
+# License
+
+This software is distributed under the terms of the GNU Affero General Public
+License. See the LICENSE file for details.

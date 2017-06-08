@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+#
+# Upload a file, or directory, to an Overview server. 
+# From https://github.com/overview/overview-upload-directory
+
+import argparse
+import logging
+import os
+from overview_upload import Upload
+
+# ---- Main ----
+
+def main():
+    parser = argparse.ArgumentParser(description='Upload a file or directory to an Overview server.')
+    parser.add_argument('file', help='file or directory to upload')
+    parser.add_argument('-t', '--token', help='API token corresponding to document set', required=True)
+    parser.add_argument('-s', '--server', help='url of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
+    parser.add_argument('--skip-duplicate', dest='skip_duplicate', help='Skip files already on the server', action="store_true")
+    parser.add_argument('-n', '--noskip', dest='skip_duplicate', help='Don\'t skip files already on server', action="store_false")
+    parser.add_argument('--split-by-page', dest='split_by_page', help='Turn input files into one document per page', action="store_true", default=False)
+    parser.add_argument('--ocr', dest='ocr', help='Run OCR on PDF pages that are only images', action="store_true")
+    parser.add_argument('--no-ocr', dest='ocr', help='Skip OCR always (for speed)', action="store_false")
+    parser.set_defaults(ocr=True, skip_duplicate=True)
+    args = parser.parse_args()
+
+    filename = args.file
+
+    logger = logging.getLogger("overview-upload")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler())
+
+    if not os.path.exists(filename):
+        print("Cannot find file or directory " + filename)
+    else:
+        upload = Upload(args.server, args.token, logger=logger)
+        upload.clear_previous_upload()
+
+        upload_kwargs = {
+            'skip_unhandled_extension': True,
+            'skip_duplicate': args.skip_duplicate,
+        }
+
+        if os.path.isdir(filename):
+            # Send a directory.
+            upload.send_directory(filename, **upload_kwargs)
+        else:
+            # Send a single file.
+            # use a basename on the server -- no directories
+            path = pathlib.Path(filename)
+            upload.send_path_if_conditions_met(path, filename=path.name, **upload_kwargs)
+
+        upload.finish(
+            ocr=args.ocr,
+            split_by_page=args.split_by_page
+        )
+
+if __name__ == '__main__':
+    main()
