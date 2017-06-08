@@ -67,8 +67,7 @@ overview-upload-csv: upload from a CSV manifest
 Given a CSV like this:
 
 .. csv-table:: manifest.csv
-   :header id,title,url,field1,field2
-
+   :header: id,title,url,field1,field2
    1,doc1.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,some metadata,some more metadata
    2,doc2.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,more metadata,and even more metadata
 
