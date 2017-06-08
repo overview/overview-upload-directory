@@ -58,7 +58,7 @@ for more information.
 0. [Register on PyPI](https://pypi.python.org/pypi?%3Aaction=register_form) and
    create `~/.pypirc` with `[pypi]\nusername = ...\npassword = ...`
 1. Update `version` in `setup.py`
-2. `rm -r dist && ./setup.py bdist && gpg --detach-sign -a dist/*.tar.gz && twine upload dist/*.tar.gz dist/*.asc`
+2. `rm -r dist && ./setup.py sdist && gpg --detach-sign -a dist/*.tar.gz && twine upload dist/*.tar.gz dist/*.asc`
 
 # License
 

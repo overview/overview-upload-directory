@@ -13,15 +13,15 @@ def _calculate_sha1(in_file):
     m.hexdigest()
 
 class Upload:
-    def __init__(self, server_url, api_token, logger=None):
-        """Start an Upload session.
+    """Start an Upload session.
 
-        Arguments:
-        server_url -- Website to upload to. For example:
-                      https://www.overviewdocs.com
-        api_token -- Code from
-                     https://www.overviewdocs.com/documentsets/XXXX/api-tokens
-        """
+    :param str server_url: Website to upload to. For example:
+        ``https://www.overviewdocs.com``
+    :param str api_token: String from
+        https://www.overviewdocs.com/documentsets/XXXX/api-tokens
+    """
+
+    def __init__(self, server_url, api_token, logger=None):
         if logger is None:
             logger = logging.getLogger('{}.Upload'.format(__name__))
 
@@ -53,9 +53,9 @@ class Upload:
     def clear_previous_upload(self):
         """Remove any previously uploaded files from the server.
 
-        If you _don't_ call this, then when you finish() you may find Overview
-        adds files you didn't expect: files you uploaded sometime in the past
-        but never called finish() on.
+        If you *don't* call this, then when you ``finish()`` you may find
+        Overview adds files you uploaded sometime in the past and then forgot
+        about.
         """
         self.logger.info('Clearing previous uploads…')
         r = self._request('DELETE', '/api/v1/files')
@@ -64,20 +64,19 @@ class Upload:
     def send_directory(self, dirname, skip_unhandled_extension=True, skip_duplicate=True):
         """Upload all files in a directory to the Overview server.
 
-        If skip_duplicate == False, then files will be streamed to the server.
-        Otherwise, this method will cache each file in memory during upload.
+        If ``skip_duplicate == False``, then files will be streamed to the
+        server. Otherwise, this method will cache each file in memory during
+        upload.
 
-        Arguments:
-        dirname -- Directory to upload.
-        skip_unhandled_extension -- if True (the default), do not upload files
-                                    when Overview doesn't support their
-                                    filename extensions (for instance, ".dbf").
-        skip_duplicate -- if True (the default), do not upload a file if your
-                          api_token points to a document set that already
-                          contains a file whose sha1 hash is identical to this
-                          file's. Files that have been sent but not finish()ed
-                          will not be included in the check. If False, stream
-                          files instead of caching it.
+        :param str dirname: Directory to upload.
+        :param bool skip_unhandled_extension: if ``True`` (the default), do not
+            upload files when Overview doesn't support their filename extensions
+            (for instance, ``".dbf"``).
+        :param bool skip_duplicate: if ``True`` (the default), do not upload a
+            file if ``api_token`` points to a document set that already contains a
+            file whose sha1 hash is identical to this file's. Files that have been
+            sent without a call to ``finish()`` will not be included in the check.
+            If ``False``, stream files instead of caching them.
         """
         for path in pathlib.Path(dirname).glob('**/*'):
             filename = str(path.relative_to(dirname)) # visible on the server
@@ -100,17 +99,17 @@ class Upload:
         The file will be streamed: that is, the script does not risk running out
         of memory.
 
-        Arguments:
-        path -- absolute or relative pathlib.Path pointing to the document.
-        filename -- filename Overview should use.
-        skip_unhandled_extension -- if True (the default), do not upload this
-                                    file if Overview doesn't support its
-                                    filename extension (for instance, ".dbf").
-        skip_duplicate -- if True (the default), do not upload this file if your
-                          api_token points to a document set that already
-                          contains a file whose sha1 hash is identical to this
-                          file's. Files that have been sent but not finish()ed
-                          will not be included in the check.
+        :param pathlib.Path path: absolute or relative pathlib.Path pointing
+            to the document.
+        :param str filename: filename Overview should use.
+        :param bool skip_unhandled_extension: -- if ``True`` (the default), do
+            not upload this file if Overview doesn't support its filename
+            extension (for instance, ``".dbf"``).
+        :param bool skip_duplicate: if ``True`` (the default), do not upload
+            this file if your api_token points to a document set that already
+            contains a file whose sha1 hash is identical to this file's. Files
+            that have been sent but not finish()ed will not be included in the
+            check.
         """
         n_bytes = path.stat().st_size
 
@@ -136,26 +135,27 @@ class Upload:
     def send_file_if_conditions_met(self, in_file, filename, n_bytes=None, skip_unhandled_extension=True, skip_duplicate=True, sha1=None):
         """Upload a file to the Overview server.
 
-        If n_bytes is None, or if skip_duplicate is True and sha1 is None,
-        then in_file will be cached in memory. Otherwise, it will be streamed
-        to the server, saving memory.
+        If ``n_bytes is None or (skip_duplicate == True and sha1 is None)``,
+        then ``in_file`` will be cached in memory. Otherwise, it will be
+        streamed to the server, saving memory.
 
-        Arguments:
-        in_file -- BytesIO containing the document.
-        filename -- Filename to set in Overview.
-        n_bytes -- Exact file size. Supply this and sha1 (if applicable) to
-                   stream in_file to the server instead of caching it.
-        skip_unhandled_extension -- if True (the default), do not upload this
-                                    file if Overview doesn't support its
-                                    filename extension (for instance, ".dbf").
-        skip_duplicate -- if True (the default), do not upload this file if your
-                          api_token points to a document set that already
-                          contains a file whose sha1 hash is identical to this
-                          file's. Files that have been sent but not finish()ed
-                          will not be included in the check.
-        sha1 -- sha1 to use in skip_duplicate check. If you set this and
-                n_bytes, this method will stream the file contents, saving
-                memory.
+        :param io.BytesIO in_file: BytesIO containing the document.
+        :param str filename: Filename to set in Overview.
+        :param int n_bytes: Exact file size (or `None` to auto-calculate).
+            Supply this and ``sha1`` (if applicable) to stream ``in_file`` to
+            the server instead of caching it in memory.
+        :param bool skip_unhandled_extension: if ``True`` (the default), do not
+            upload this file if Overview doesn't support its filename extension
+            (for instance, ``".dbf"``).
+        :param bool skip_duplicate: if ``True`` (the default), do not upload
+            this file if your api_token points to a document set that already
+            contains a file whose sha1 hash is identical to this file's. Files
+            that have been sent without a call to ``finish()`` will not be
+            included in the check.
+        :param str sha1: SHA1 hash:to use in ``skip_duplicate()`` check, or
+            ``None`` to calculate on the fly. If you set this and ``n_bytes``,
+            this method will stream the file contents instead of caching them
+            in memory.
         """
         if skip_unhandled_extension:
             # We go by filename, with a blacklist we know Overview doesn't handle (yet)
@@ -198,14 +198,14 @@ class Upload:
     def is_file_already_in_document_set(self, in_file, sha1=None):
         """Return True iff the document set contains an identical file.
 
-        This works by calculating the sha1 and asking Overview whether it's been
-        seen before in our document set. Files that have been sent but not
-        finish()ed will not be included in the check.
+        This works by calculating the SHA1 and asking Overview whether it's been
+        seen before in our document set. Files sent without a call to
+        ``finish()`` will not be included in this check.
 
-        Arguments:
-        in_file -- bytes to upload to Overview
-        sha1 -- if set, assume the given sha1 instead of reading the file. If
-                None (the default), then in_file will be read completely.
+        :param io.BytesIO in_file: bytes to upload to Overview.
+        :param str sha1: if set, assume the given SHA1 hash instead of computing
+            it by reading the file. If ``None`` (the default), then ``in_file``
+            will be read completely.
         """
         if sha1 is None:
             sha1 = _calculate_sha1(in_file)
@@ -218,15 +218,14 @@ class Upload:
     def finish(self, lang='en', ocr=True, split_by_page=False):
         """Adds sent files to the document set.
 
-        Keyword arguments:
-        lang -- ISO language code for Overview's analysis (default is 'en')
-        ocr -- if True (the default), tell Overview to read text from PDF pages
-               that contain only images.
-        split_by_page -- if True, tell Overview to create a document per page of
-                         the input file. (This only applies to PDFs and
-                         LibreOffice-compatible documents.) If False (the
-                         default), tell Overview to create one document per
-                         uploaded file.
+        :param str lang: ISO language code for Overview's analysis (default is
+            ``"en"``)
+        :param bool ocr: if ``True`` (the default), tell Overview to read text
+            from PDF pages that contain only images.
+        :param bool split_by_page: if ``True``, tell Overview to create a
+            document per page of the input file. (This only applies to PDFs and
+            LibreOffice-compatible documents.) If ``False`` (the default), tell
+            Overview to create one document per uploaded file.
         """
         if self.n_uploaded == 0:
             self.logger.info('No files uploaded')
