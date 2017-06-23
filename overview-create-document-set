@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+#
+# Create an empty document set on an Overview server.
+
+import argparse
+import logging
+import json
+import os
+import sys
+from overview_upload import create_document_set
+
+def parse_metadata_json(s, logger):
+    try:
+        d = json.loads(s)
+    except json.JSONDecodeError as err:
+        logger.error('Syntax error in metadata schema JSON at %d:%d: %s', err.lineno, err.colno, err.msg)
+        sys.exit(1)
+
+    if not isinstance(d, dict):
+        logger.error('Error in metadata schema JSON: expected JSON Object')
+        sys.exit(1)
+
+    if sorted(d.keys()) != [ 'fields', 'version' ]:
+        logger.error('Error in metadata schema JSON: expected "version" and "fields" properties, and no others')
+        sys.exit(1)
+
+    if d['version'] != 1:
+        logger.error('Error in metadata schema JSON: "version" must be the Number 1')
+        sys.exit(1)
+
+    if not isinstance(d['fields'], list):
+        logger.error('Error in metadata schema JSON: "fields" must be a JSON Array')
+        sys.exit(1)
+
+    for i, field in enumerate(d['fields']):
+        if not isinstance(field, dict) or sorted(field.keys()) != [ 'name', 'type' ] or field['type'] != 'String' or not isinstance(field['name'], str):
+            logger.error('Error in metadata schema JSON field %d: expected { "type": "String", "name": "<name>" }', i)
+            sys.exit(1)
+
+    return d
+
+def read_metadata_json_file(path, logger):
+    try:
+        with open(path, encoding='utf-8') as f:
+            s = f.read()
+    except IOError as err:
+        logger.error('I/O Error %d reading metadata schema JSON file %s: %s', err.errno, err.filename, err.strerror)
+        sys.exit(1)
+
+    return parse_metadata_json(s, logger)
+
+def parse_field_names(s):
+    names = [ name for name in map(str.strip, s.split(',')) if len(name) > 0 ]
+    return {
+        'version': 1,
+        'fields': [ { 'name': name, 'type': 'String' } for name in names ]
+    }
+
+def main():
+    parser = argparse.ArgumentParser(description='Create a document set on an Overview server')
+    parser.add_argument('title', help='Title for new document set')
+    parser.add_argument('--api-token', '--token', help='API token from [server-url]/api-tokens', required=True)
+    parser.add_argument('--server', help='URL of Overview server, defaults to http://localhost:9000', default='http://localhost:9000')
+
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument('--metadata-schema-json-file', help='JSON file containing metadata schema')
+    group.add_argument('--metadata-schema-json-string', help='JSON data containing metadata schema')
+    group.add_argument('--metadata-schema-field-names', help='List of comma-separated metadata field names')
+
+    args = parser.parse_args()
+
+    logger = logging.getLogger("overview-create-document-set")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler())
+
+    metadata_schema = {'version':1,'fields':[]}
+    if args.metadata_schema_json_file is not None:
+        metadata_schema = read_metadata_json_file(args.metadata_schema_json_file, logger)
+    elif args.metadata_schema_json_string is not None:
+        metadata_schema = parse_metadata_json(args.metadata_schema_json_string, logger)
+    elif args.metadata_schema_field_names is not None:
+        metadata_schema = parse_field_names(args.metadata_schema_field_names)
+
+    ret = create_document_set(
+        args.server,
+        args.api_token,
+        args.title,
+        metadata_schema=metadata_schema,
+        logger=logger
+    )
+    print('Created document set "{}"'.format(ret['documentSet']['title']))
+    print('Metadata fields: {}'.format(', '.join([ f['name'] for f in ret['documentSet']['metadataSchema']['fields']])))
+    print('Document set ID: {}'.format(ret['documentSet']['id']))
+    print('View at: {}/documentsets/{}'.format(args.server, ret['documentSet']['id']))
+    print('Add documents with API token: {}'.format(ret['apiToken']['token']))
+
+if __name__ == '__main__':
+    main()
