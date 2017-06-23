@@ -39,7 +39,7 @@ class Upload:
         # We need a "nested" dict.update(), for the headers argument. If the
         # caller specifies headers, we want them to override our defaults.
         request_headers = {
-            'X-Requested-With': 'overview_upload.py',
+            'X-Requested-With': 'overview_upload',
         }
         if 'headers' in kwargs:
             request_headers.update(kwargs['headers'])
