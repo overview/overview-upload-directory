@@ -79,7 +79,7 @@ You can upload the referenced files to Overview like this:
 If you browse to the document set and add ``field1`` and ``field2`` fields, you
 will see the values from the CSV.
 
-You can use `--local-file-field` instead of `--url-field` to use a field containing paths on your filesystem.
+You can use ``--local-file-field`` instead of ``--url-field`` to use a field containing paths on your filesystem.
 
 API usage
 =========
