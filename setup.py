@@ -9,7 +9,7 @@ def read_file(filename):
 
 setup(
     name='overview_upload',
-    version='0.9.6',
+    version='0.9.7',
     description='Upload documents to Overview web server',
     long_description=read_file('README.rst'),
     url='https://github.com/overview/overview-upload-directory',
@@ -18,7 +18,7 @@ setup(
         'rfc6266>=0.0.4',
     ],
     packages=[ 'overview_upload' ],
-    scripts=[ 'overview-upload', 'overview-upload-csv' ],
+    scripts=[ 'overview-create-document-set', 'overview-upload', 'overview-upload-csv' ],
     classifiers=(
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Intended Audience :: Developers',
