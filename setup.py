@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, find_packages
+import os
+from setuptools import setup
 
 def read_file(filename):
-    with open(filename, encoding="utf-8") as f:
+    with open(os.path.join(os.path.dirname(__file__), filename), encoding="utf-8") as f:
         return f.read()
 
 setup(
     name='overview_upload',
-    version='0.9.4',
+    version='0.9.5',
     description='Upload documents to Overview web server',
     long_description=read_file('README.rst'),
     url='https://github.com/overview/overview-upload-directory',
-    install_requires=read_file('requirements.txt').splitlines(),
+    install_requires=[
+        'requests>=2.17.3',
+        'rfc6266>=0.0.4',
+    ],
     packages=[ 'overview_upload' ],
     scripts=[ 'overview-upload', 'overview-upload-csv' ],
     classifiers=(
