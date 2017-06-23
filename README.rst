@@ -25,8 +25,8 @@ Required arguments:
 -  ``SERVER_URL`` is the base URL for the server, which defaults to
    http://localhost:9000 for use with
    `overview-local <https://github.com/overview/overview-local>`__.
--  ``API_TOKEN`` is required. It's the access token for a particular
-   document set, which you get like this
+-  ``API_TOKEN`` is the access token for a particular document set,
+   which you get like this:
 
    1. Browse to your document set. The URL will look like
       ``http://localhost:9000/documentsets/123456``.
@@ -80,6 +80,28 @@ If you browse to the document set and add ``field1`` and ``field2`` fields, you
 will see the values from the CSV.
 
 You can use ``--local-file-field`` instead of ``--url-field`` to use a field containing paths on your filesystem.
+
+overview-uploadcreate-document-set: Create an empty document set
+----------------------------------------------------------------
+
+You can create an empty document set using this incantation:
+
+``overview-create-document-set --server <SERVER_URL> --token <API_TOKEN> [options] "DOCUMENT SET TITLE"``
+
+Required arguments:
+
+-  ``SERVER_URL`` is the base URL for the server, which defaults to
+   http://localhost:9000 for use with
+   `overview-local <https://github.com/overview/overview-local>`__.
+-  ``API_TOKEN`` is the *global* access token for creating document sets,
+   which you can create at https://www.overviewdocs.com/api-tokens
+
+Optional arguments:
+
+- ``--metadata-schema-field-names``: Fields to display for each document. Example: ``"Title,Author"``.
+
+The program will display an API token you can use to add documents to the new
+document set.
 
 API usage
 =========
