@@ -76,7 +76,7 @@ def main():
 
     args = parser.parse_args()
 
-    logger = logging.getLogger('upload-elsevier-docset')
+    logger = logging.getLogger('overview-upload-csv')
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
