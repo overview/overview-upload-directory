@@ -89,11 +89,11 @@ def main():
 
     metadata_schema = None # don't alter document set's existing schema by default
     if args.metadata_schema_json_file is not None:
-        metadata_schema = read_metadata_json_file(args.metadata_schema_json_file, logger)
+        metadata_schema = overview_upload.read_metadata_json_file(args.metadata_schema_json_file, logger)
     elif args.metadata_schema_json_string is not None:
-        metadata_schema = parse_metadata_json(args.metadata_schema_json_string, logger)
+        metadata_schema = overview_upload.parse_metadata_json(args.metadata_schema_json_string, logger)
     elif args.metadata_schema_field_names is not None:
-        metadata_schema = parse_metadata_from_delimited_string_of_fields(args.metadata_schema_field_names)
+        metadata_schema = overview_upload.parse_metadata_from_delimited_string_of_fields(args.metadata_schema_field_names)
 
     with open(args.csv, encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -118,9 +118,9 @@ def main():
 
         if args.create_with_title:
             if metadata_schema is None:
-                metadata_schema = DefaultMetadataSchema
+                metadata_schema = overview_upload.DefaultMetadataSchema
             response = overview_upload.create_document_set(args.server, args.api_token, args.create_with_title, metadata_schema=metadata_schema, logger=logger)
-            logger.info('Created document set "{}" with ID {}', args.create_with_title, response['documentSet']['id'])
+            logger.info('Created document set "%s" with ID %d', args.create_with_title, response['documentSet']['id'])
             api_token = response['apiToken']['token']
         else:
             if metadata_schema is not None:
