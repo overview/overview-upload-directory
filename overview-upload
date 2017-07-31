@@ -6,7 +6,8 @@
 import argparse
 import logging
 import os
-from overview_upload import Upload
+import pathlib
+from overview_upload import Upload, create_document_set
 
 # ---- Main ----
 
@@ -20,6 +21,7 @@ def main():
     parser.add_argument('--split-by-page', dest='split_by_page', help='Turn input files into one document per page', action="store_true", default=False)
     parser.add_argument('--ocr', dest='ocr', help='Run OCR on PDF pages that are only images', action="store_true")
     parser.add_argument('--no-ocr', dest='ocr', help='Skip OCR always (for speed)', action="store_false")
+    parser.add_argument('--create-document-set-with-title', dest='create_with_title', help='Create a new document set and then add files')
     parser.set_defaults(ocr=True, skip_duplicate=True)
     args = parser.parse_args()
 
@@ -32,7 +34,14 @@ def main():
     if not os.path.exists(filename):
         print("Cannot find file or directory " + filename)
     else:
-        upload = Upload(args.server, args.token, logger=logger)
+        if args.create_with_title:
+            response = create_document_set(args.server, args.token, args.create_with_title, logger=logger)
+            logger.info('Created document set "{}" with ID {}', args.create_with_title, response['documentSet']['id'])
+            api_token = response['apiToken']['token']
+        else:
+            api_token = args.token
+
+        upload = Upload(args.server, api_token, logger=logger)
         upload.clear_previous_upload()
 
         upload_kwargs = {

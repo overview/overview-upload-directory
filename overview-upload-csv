@@ -74,13 +74,26 @@ def main():
 
     parser.add_argument('--title-field', help='CSV column containing titles to display in Overview (default url/local-file)')
 
+    parser.add_argument('--create-document-set-with-title', dest='create_with_title', help='Create a new document set and then add files')
+
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument('--metadata-schema-json-file', help='JSON file containing desired document set metadata schema')
+    group.add_argument('--metadata-schema-json-string', help='JSON data containing desired document set metadata schema')
+    group.add_argument('--metadata-schema-field-names', help='List of comma-separated metadata field names for desired document set')
+
     args = parser.parse_args()
 
     logger = logging.getLogger('overview-upload-csv')
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
-    upload = overview_upload.Upload(args.server, args.api_token, logger=logger)
+    metadata_schema = None # don't alter document set's existing schema by default
+    if args.metadata_schema_json_file is not None:
+        metadata_schema = read_metadata_json_file(args.metadata_schema_json_file, logger)
+    elif args.metadata_schema_json_string is not None:
+        metadata_schema = parse_metadata_json(args.metadata_schema_json_string, logger)
+    elif args.metadata_schema_field_names is not None:
+        metadata_schema = parse_metadata_from_delimited_string_of_fields(args.metadata_schema_field_names)
 
     with open(args.csv, encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -103,12 +116,25 @@ def main():
             logger.error('You requested title-field `%s`, but the CSV does not contain it', args.title_field)
             sys.exit(1)
 
+        if args.create_with_title:
+            if metadata_schema is None:
+                metadata_schema = DefaultMetadataSchema
+            response = overview_upload.create_document_set(args.server, args.api_token, args.create_with_title, metadata_schema=metadata_schema, logger=logger)
+            logger.info('Created document set "{}" with ID {}', args.create_with_title, response['documentSet']['id'])
+            api_token = response['apiToken']['token']
+        else:
+            if metadata_schema is not None:
+                raise 'TODO alter the metadata schema of an existing document set'
+            api_token = args.api_token
+
+        upload = overview_upload.Upload(args.server, api_token, logger=logger)
+
         process_row = build_upload_call(upload, logger, field, args.title_field or field, open_file)
 
         for (i, row) in enumerate(reader):
             process_row(row, i + 1)
 
-    upload.finish()
+        upload.finish()
 
 if __name__ == '__main__':
     main()

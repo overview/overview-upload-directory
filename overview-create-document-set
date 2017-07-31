@@ -4,57 +4,7 @@
 
 import argparse
 import logging
-import json
-import os
-import sys
-from overview_upload import create_document_set
-
-def parse_metadata_json(s, logger):
-    try:
-        d = json.loads(s)
-    except json.JSONDecodeError as err:
-        logger.error('Syntax error in metadata schema JSON at %d:%d: %s', err.lineno, err.colno, err.msg)
-        sys.exit(1)
-
-    if not isinstance(d, dict):
-        logger.error('Error in metadata schema JSON: expected JSON Object')
-        sys.exit(1)
-
-    if sorted(d.keys()) != [ 'fields', 'version' ]:
-        logger.error('Error in metadata schema JSON: expected "version" and "fields" properties, and no others')
-        sys.exit(1)
-
-    if d['version'] != 1:
-        logger.error('Error in metadata schema JSON: "version" must be the Number 1')
-        sys.exit(1)
-
-    if not isinstance(d['fields'], list):
-        logger.error('Error in metadata schema JSON: "fields" must be a JSON Array')
-        sys.exit(1)
-
-    for i, field in enumerate(d['fields']):
-        if not isinstance(field, dict) or sorted(field.keys()) != [ 'name', 'type' ] or field['type'] != 'String' or not isinstance(field['name'], str):
-            logger.error('Error in metadata schema JSON field %d: expected { "type": "String", "name": "<name>" }', i)
-            sys.exit(1)
-
-    return d
-
-def read_metadata_json_file(path, logger):
-    try:
-        with open(path, encoding='utf-8') as f:
-            s = f.read()
-    except IOError as err:
-        logger.error('I/O Error %d reading metadata schema JSON file %s: %s', err.errno, err.filename, err.strerror)
-        sys.exit(1)
-
-    return parse_metadata_json(s, logger)
-
-def parse_field_names(s):
-    names = [ name for name in map(str.strip, s.split(',')) if len(name) > 0 ]
-    return {
-        'version': 1,
-        'fields': [ { 'name': name, 'type': 'String' } for name in names ]
-    }
+from overview_upload import create_document_set, parse_metadata_json, read_metadata_json_file, parse_metadata_from_delimited_string_of_fields, DefaultMetadataSchema
 
 def main():
     parser = argparse.ArgumentParser(description='Create a document set on an Overview server')
@@ -73,13 +23,13 @@ def main():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
-    metadata_schema = {'version':1,'fields':[]}
+    metadata_schema = DefaultMetadataSchema
     if args.metadata_schema_json_file is not None:
         metadata_schema = read_metadata_json_file(args.metadata_schema_json_file, logger)
     elif args.metadata_schema_json_string is not None:
         metadata_schema = parse_metadata_json(args.metadata_schema_json_string, logger)
     elif args.metadata_schema_field_names is not None:
-        metadata_schema = parse_field_names(args.metadata_schema_field_names)
+        metadata_schema = parse_metadata_from_delimited_string_of_fields(args.metadata_schema_field_names)
 
     ret = create_document_set(
         args.server,

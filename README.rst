@@ -29,7 +29,7 @@ Required arguments:
    which you get like this:
 
    1. Browse to your document set. The URL will look like
-      ``http://localhost:9000/documentsets/123456``.
+      ``https://www.overviewdocs.com/documentsets/123456``.
    2. Note the document set number, in this case ``123456``
    3. Browse to
       ``https://www.overviewdocs.com/documentsets/[your number here]/api-tokens``
@@ -54,6 +54,10 @@ Optional arguments:
    `Tesseract <https://github.com/tesseract-ocr/tesseract>`__ (which is
    slow and will prevent you from viewing the document set until it
    finishes), or it can assume the page contains no text.
+-- ``create-document-set-with-title``: create a new document set with the
+   given title and then add files to it. ``API_TOKEN`` here is one you
+   create at http://www.overviewdocs.com/api-tokens or
+   http://localhost:9000/api-tokens.
 
 If you upload a single file, its Overview document title will be its
 filename, without any directory information. If you upload a directory,
@@ -81,7 +85,7 @@ will see the values from the CSV.
 
 You can use ``--local-file-field`` instead of ``--url-field`` to use a field containing paths on your filesystem.
 
-overview-uploadcreate-document-set: Create an empty document set
+overview-create-document-set: Create an empty document set
 ----------------------------------------------------------------
 
 You can create an empty document set using this incantation:
