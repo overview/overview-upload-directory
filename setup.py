@@ -9,7 +9,7 @@ def read_file(filename):
 
 setup(
     name='overview_upload',
-    version='0.9.8',
+    version='0.9.9',
     description='Upload documents to Overview web server',
     long_description=read_file('README.rst'),
     url='https://github.com/overview/overview-upload-directory',

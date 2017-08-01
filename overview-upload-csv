@@ -4,7 +4,9 @@ import argparse
 import csv
 import logging
 import pathlib
+import queue
 import sys
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -62,6 +64,18 @@ def build_upload_call(upload, logger, field, title_field, open_file):
 
     return process_row
 
+def process_row_queue(row_queue, process_row):
+    """Calls process_row(*row_queue.get()) forever.
+
+    Set this to be a daemon thread, so that the program will exit. (Python
+    concurrency is silly; this is a quick hack that works because we know we'll
+    be exiting the program after these threads are all done.)
+    """
+    while True:
+        row = row_queue.get()
+        process_row(*row)
+        row_queue.task_done()
+
 def main():
     parser = argparse.ArgumentParser(description='Upload to Overview from a spreadsheet full of metadata')
     parser.add_argument('api_token', help='API token from http://localhost:9000/documentsets/[ID]/api-tokens')
@@ -71,6 +85,8 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--url-field', help='CSV column containing URLs of files to stream to Overview')
     group.add_argument('--local-file-field', help='CSV column containing filenames to stream to Overview')
+
+    parser.add_argument('--n-concurrent-uploads', type=int, default=1, help='Number of simultaneous uploads: useful when --url-field gives slow-but-plentiful connections, like S3')
 
     parser.add_argument('--title-field', help='CSV column containing titles to display in Overview (default url/local-file)')
 
@@ -131,9 +147,46 @@ def main():
 
         process_row = build_upload_call(upload, logger, field, args.title_field or field, open_file)
 
-        for (i, row) in enumerate(reader):
-            process_row(row, i + 1)
+        # Multi-threading:
+        #
+        # Goal: call process_row(row, csvLineNumber) for every row in the CSV,
+        # in any order, and then exit.
+        #
+        # Implementation:
+        #
+        # * Producer: the main thread keeps a backlog of rows in row_queue.
+        #   (row_queue.put() blocks when the queue is too large, which means we
+        #   support an unlimited number of CSV rows.)
+        # * Consumers: each worker thread (RowQueueProcessor) reads from the
+        #   queue and executes process_row() with the values it gets.
+        # * Completion: Python weirdness: we call queue.join() after we're done
+        #   producing; it returns when all threads signal that they've completed
+        #   all their tasks (by calling row_queue.task_done()). The threads
+        #   never die, and [adam, 2017-08-01] I can't see that Python actually
+        #   provides a mechanism for killing them. But they're daemon threads,
+        #   and the main process exits after we're done, so they'll exit as
+        #   well.
+        #
+        # I marvel that the Python Standard Library provides this queue module
+        # without an obvious mechanism for killing it.
+        row_queue = queue.Queue(args.n_concurrent_uploads * 2)
 
+        # Start consumers
+        row_processors = []
+        for i in range(args.n_concurrent_uploads):
+            row_processor = threading.Thread(target=process_row_queue, args=(row_queue, process_row))
+            row_processor.daemon = True
+            row_processor.start()
+            row_processors.append(row_processor)
+
+        # Produce all the tasks
+        for (i, row) in enumerate(reader):
+            row_queue.put((row, i + 1))
+
+        # Wait until the consumers have processed all the tasks
+        row_queue.join()
+
+        # POST to finish creating the document set
         upload.finish()
 
 if __name__ == '__main__':
