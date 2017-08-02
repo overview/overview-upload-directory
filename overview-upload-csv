@@ -60,7 +60,10 @@ def build_upload_call(upload, logger, field, title_field, open_file):
             return
 
         for in_file in open_file(path, logger, field, line_number):
-            upload.send_file_if_conditions_met(in_file, title, metadata=row)
+            try:
+                upload.send_file_if_conditions_met(in_file, title, metadata=row)
+            except requests.exceptions.RequestException as err:
+                logger.warn('Failed upload: %s', str(err))
 
     return process_row
 
