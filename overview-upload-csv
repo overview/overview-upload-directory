@@ -5,6 +5,7 @@ import csv
 import logging
 import pathlib
 import queue
+import requests.exceptions
 import sys
 import threading
 import urllib.error
