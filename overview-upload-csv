@@ -95,6 +95,7 @@ def main():
     group.add_argument('--no-ocr', dest='ocr', help='Skip OCR always (for speed)', action="store_false")
 
     parser.add_argument('--split-by-page', dest='split_by_page', help='Turn input files into one document per page', action="store_true", default=False)
+    parser.add_argument('--lang', dest='lang', default='en', help='2-char ISO document language code (used for OCR and text analysis)')
 
     parser.add_argument('--n-concurrent-uploads', type=int, default=1, help='Number of simultaneous uploads: useful when --url-field gives slow-but-plentiful connections, like S3')
 
@@ -200,7 +201,8 @@ def main():
         # POST to finish creating the document set
         upload.finish(
             ocr=args.ocr,
-            split_by_page=args.split_by_page
+            split_by_page=args.split_by_page,
+            lang=args.lang
         )
 
 if __name__ == '__main__':

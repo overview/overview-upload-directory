@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--skip-duplicate', dest='skip_duplicate', help='Skip files already on the server', action="store_true")
     parser.add_argument('-n', '--noskip', dest='skip_duplicate', help='Don\'t skip files already on server', action="store_false")
     parser.add_argument('--split-by-page', dest='split_by_page', help='Turn input files into one document per page', action="store_true", default=False)
+    parser.add_argument('--lang', dest='lang', default='en', help='2-char ISO document language code (used for OCR and text analysis)')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--ocr', dest='ocr', help='Run OCR on PDF pages that are only images', action="store_true")
@@ -63,7 +64,8 @@ def main():
 
         upload.finish(
             ocr=args.ocr,
-            split_by_page=args.split_by_page
+            split_by_page=args.split_by_page,
+            lang=args.lang
         )
 
 if __name__ == '__main__':
