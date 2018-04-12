@@ -73,8 +73,8 @@ Given a CSV like this:
 .. csv-table:: manifest.csv
    :header: id,title,url,field1,field2
    
-   1,doc1.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,some metadata,some more metadata
-   2,doc2.pdf,http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_open_parameters.pdf,more metadata,and even more metadata
+   1,doc1.pdf,http://myurl.com/pdfs/somedocument.pdf,some metadata,some more metadata
+   2,doc2.pdf,http://myurl.com/pdfs/anotherdocument.pdf,more metadata,and even more metadata
 
 You can upload the referenced files to Overview like this:
 
