@@ -24,7 +24,7 @@ Required arguments:
 
 -  ``SERVER_URL`` is the base URL for the server, which defaults to
    http://localhost:9000 for use with
-   `overview-local <https://github.com/overview/overview-local>`__.
+   `overview-local <https://github.com/overview/overview-local>`__. Use `https://www.overviewdocs.com` if uploading to the public server.
 -  ``API_TOKEN`` is the access token for a particular document set,
    which you get like this:
 
